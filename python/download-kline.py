@@ -13,7 +13,6 @@ import pandas as pd
 from enums import *
 from utility import download_file, get_all_symbols, get_parser, get_start_end_date_objects, convert_to_date_object
 
-
 def download_monthly_klines(symbols, num_symbols, intervals, years, months, start_date, end_date, folder, checksum):
   current = 0
   date_range = None
@@ -86,13 +85,13 @@ def download_daily_klines(symbols, num_symbols, intervals, dates, start_date, en
             checksum_path = "data/spot/daily/klines/{}/{}/".format(symbol.upper(), interval)
             checksum_file_name = "{}-{}-{}.zip.CHECKSUM".format(symbol.upper(), interval, date)
             download_file(checksum_path, checksum_file_name, date_range, folder)
-
     current += 1
 
+    
 if __name__ == "__main__":
     parser = get_parser('klines')
     args = parser.parse_args(sys.argv[1:])
-
+    args.intervals = ['15m','30m','1h','4h','6h','8h','12h','1d']
     if not args.symbols:
       print("fetching all symbols from exchange")
       symbols = get_all_symbols()
@@ -106,6 +105,6 @@ if __name__ == "__main__":
     else:
       dates = pd.date_range(end = datetime.today(), periods = MAX_DAYS).to_pydatetime().tolist()
       dates = [date.strftime("%Y-%m-%d") for date in dates]
-      download_monthly_klines(symbols, num_symbols, args.intervals, args.years, args.months, args.startDate, args.endDate, args.folder, args.checksum)
+      #download_monthly_klines(symbols, num_symbols, args.intervals, args.years, args.months, args.startDate, args.endDate, args.folder, args.checksum)
     download_daily_klines(symbols, num_symbols, args.intervals, dates, args.startDate, args.endDate, args.folder, args.checksum)
     

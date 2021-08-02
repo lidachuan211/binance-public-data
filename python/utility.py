@@ -16,10 +16,17 @@ def get_destination_dir(file_url, folder=None):
 
 def get_download_url(file_url):
   return "{}{}".format(BASE_URL, file_url)
+  
+not_in_list = ['USDT','BUSD']
 
 def get_all_symbols():
   response = urllib.request.urlopen("https://api.binance.com/api/v3/exchangeInfo").read()
-  return list(map(lambda symbol: symbol['symbol'], json.loads(response)['symbols']))
+  pairs = list(map(lambda symbol: symbol['symbol'], json.loads(response)['symbols']))
+  response = urllib.request.urlopen("https://www.bbscms.net/kaifadou/kaifadou-cjrank.php?kaifadou=vol_w").read()
+  symbols = json.loads(response)['data']['list']
+  week_top_symbols = [x+"USDT" for x in filter(lambda x : x not in not_in_list,[symbols[i]['symbol'] for i in range(10)])]
+  return [x for x in filter(lambda x :x in pairs,week_top_symbols)]
+
 
 def download_file(base_path, file_name, date_range=None, folder=None):
   download_path = "{}{}".format(base_path, file_name)
