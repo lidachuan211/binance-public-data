@@ -92,6 +92,7 @@ if __name__ == "__main__":
     parser = get_parser('klines')
     args = parser.parse_args(sys.argv[1:])
     args.intervals = ['15m','30m','1h','4h','6h','8h','12h','1d']
+    args.years = ['2020','2021']
     if not args.symbols:
       print("fetching all symbols from exchange")
       symbols = get_all_symbols()
@@ -105,6 +106,6 @@ if __name__ == "__main__":
     else:
       dates = pd.date_range(end = datetime.today(), periods = MAX_DAYS).to_pydatetime().tolist()
       dates = [date.strftime("%Y-%m-%d") for date in dates]
-      #download_monthly_klines(symbols, num_symbols, args.intervals, args.years, args.months, args.startDate, args.endDate, args.folder, args.checksum)
-    download_daily_klines(symbols, num_symbols, args.intervals, dates, args.startDate, args.endDate, args.folder, args.checksum)
+      download_monthly_klines(symbols, num_symbols, args.intervals, args.years, args.months, args.startDate, args.endDate, args.folder, args.checksum)
+    #download_daily_klines(symbols, num_symbols, args.intervals, dates, args.startDate, args.endDate, args.folder, args.checksum)
     

@@ -40,8 +40,8 @@ def download_file(base_path, file_name, date_range=None, folder=None):
   a = s[5]
   s[5] = s[4]
   s[4] = a 
-  base_path = "/".join(s)
-  save_path = get_destination_dir(os.path.join(base_path, file_name), folder)
+  s = "/".join(s)
+  save_path = get_destination_dir(os.path.join(s, file_name), folder)
   
 
   if os.path.exists(save_path):
@@ -49,8 +49,8 @@ def download_file(base_path, file_name, date_range=None, folder=None):
     return
   
   # make the directory
-  if not os.path.exists(base_path):
-    Path(get_destination_dir(base_path)).mkdir(parents=True, exist_ok=True)
+  if not os.path.exists(s):
+    Path(get_destination_dir(s)).mkdir(parents=True, exist_ok=True)
 
   try:
     download_url = get_download_url(download_path)
