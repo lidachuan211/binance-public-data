@@ -20,12 +20,13 @@ def get_download_url(file_url):
 not_in_list = ['USDT','BUSD']
 
 def get_all_symbols():
-  response = urllib.request.urlopen("https://api.binance.com/api/v3/exchangeInfo").read()
-  pairs = list(map(lambda symbol: symbol['symbol'], json.loads(response)['symbols']))
+  # response = urllib.request.urlopen("https://api.binance.com/api/v3/exchangeInfo").read()
+  # pairs = list(map(lambda symbol: symbol['symbol'], json.loads(response)['symbols']))
   response = urllib.request.urlopen("https://www.bbscms.net/kaifadou/kaifadou-cjrank.php?kaifadou=vol_w").read()
   symbols = json.loads(response)['data']['list']
   week_top_symbols = [x+"USDT" for x in filter(lambda x : x not in not_in_list,[symbols[i]['symbol'] for i in range(10)])]
-  return [x for x in filter(lambda x :x in pairs,week_top_symbols)]
+  return week_top_symbols
+  #return [x for x in filter(lambda x :x in pairs,week_top_symbols)]
 
 
 def download_file(base_path, file_name, date_range=None, folder=None):
@@ -35,6 +36,11 @@ def download_file(base_path, file_name, date_range=None, folder=None):
   if date_range:
     date_range = date_range.replace(" ","_")
     base_path = os.path.join(base_path, date_range)
+  s = base_path.split("/")
+  a = s[5]
+  s[5] = s[4]
+  s[4] = a 
+  base_path = "/".join(s)
   save_path = get_destination_dir(os.path.join(base_path, file_name), folder)
   
 
