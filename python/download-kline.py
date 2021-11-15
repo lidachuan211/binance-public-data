@@ -1,17 +1,9 @@
-#!/usr/bin/env python
-
-"""
-  script to download klines.
-  set the absoluate path destination folder for STORE_DIRECTORY, and run
-
-  e.g. STORE_DIRECTORY=/data/ ./download-kline.py
-
-"""
-import sys
+import sys,os
 from datetime import *
 import pandas as pd
 from enums import *
 from utility import download_file, get_all_symbols, get_parser, get_start_end_date_objects, convert_to_date_object
+from dateutil.relativedelta import relativedelta
 
 def download_monthly_klines(symbols, num_symbols, intervals, years, months, start_date, end_date, folder, checksum):
   current = 0
@@ -31,12 +23,16 @@ def download_monthly_klines(symbols, num_symbols, intervals, years, months, star
     end_date = convert_to_date_object(end_date)
 
   print("Found {} symbols".format(num_symbols))
-
+  import datetime
   for symbol in symbols:
     print("[{}/{}] - start download monthly {} klines ".format(current+1, num_symbols, symbol))
     for interval in intervals:
       for year in years:
         for month in months:
+          cur_year = datetime.datetime.now().year
+          cur_month = datetime.datetime.now().month
+          if str(year) >= str(cur_year) and month >= cur_month:
+            return
           current_date = convert_to_date_object('{}-{}-01'.format(year, month))
           if current_date >= start_date and current_date <= end_date:
             path = "data/spot/monthly/klines/{}/{}/".format(symbol.upper(), interval)
@@ -91,8 +87,13 @@ def download_daily_klines(symbols, num_symbols, intervals, dates, start_date, en
 if __name__ == "__main__":
     parser = get_parser('klines')
     args = parser.parse_args(sys.argv[1:])
-    args.intervals = ['15m','30m','1h','4h','6h','8h','12h','1d']
-    args.years = ['2020','2021']
+    args.intervals = ['4h']
+    from dateutil.relativedelta import relativedelta
+    args.years = ['2018','2019','2020','2021']
+    d = date.today() - relativedelta(months=+1)
+    args.years= [d.year]
+    args.months = [9,10]
+    # args.folder = os.path.join(os.path.expanduser('~'))
     if not args.symbols:
       print("fetching all symbols from exchange")
       symbols = get_all_symbols()

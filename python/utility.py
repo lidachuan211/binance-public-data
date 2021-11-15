@@ -5,6 +5,7 @@ from datetime import *
 import urllib.request
 from argparse import ArgumentParser, RawTextHelpFormatter, ArgumentTypeError
 from enums import *
+from binance.client import Client
 
 def get_destination_dir(file_url, folder=None):
   store_directory = os.environ.get('STORE_DIRECTORY')
@@ -12,70 +13,92 @@ def get_destination_dir(file_url, folder=None):
     store_directory = folder
   if not store_directory:
     store_directory = os.path.dirname(os.path.realpath(__file__))
-  return os.path.join(store_directory, file_url)
+  return os.path.join(os.environ['HOME'], file_url)
 
 def get_download_url(file_url):
   return "{}{}".format(BASE_URL, file_url)
   
 not_in_list = ['USDT','BUSD']
 
+# def get_all_symbols():
+#   # response = urllib.request.urlopen("https://api.binance.com/api/v3/exchangeInfo").read()
+#   # pairs = list(map(lambda symbol: symbol['symbol'], json.loads(response)['symbols']))
+#   # response = urllib.request.urlopen("https://www.bbscms.net/kaifadou/kaifadou-cjrank.php?kaifadou=vol_w").read()
+#   # symbols = json.loads(response)['data']['list']
+#   # week_top_symbols = [x+"USDT" for x in filter(lambda x : x not in not_in_list,[symbols[i]['symbol'] for i in range(10)])]
+#   # return week_top_symbols
+
 def get_all_symbols():
-  # response = urllib.request.urlopen("https://api.binance.com/api/v3/exchangeInfo").read()
-  # pairs = list(map(lambda symbol: symbol['symbol'], json.loads(response)['symbols']))
-  response = urllib.request.urlopen("https://www.bbscms.net/kaifadou/kaifadou-cjrank.php?kaifadou=vol_w").read()
-  symbols = json.loads(response)['data']['list']
-  week_top_symbols = [x+"USDT" for x in filter(lambda x : x not in not_in_list,[symbols[i]['symbol'] for i in range(10)])]
-  return week_top_symbols
-  #return [x for x in filter(lambda x :x in pairs,week_top_symbols)]
+  iter = 0
+  while iter < 10:
+      products = get_client().get_products()
+      symbols = [x['s'] for x in products['data']]
+      symbols = [symbol for symbol in symbols if symbol.endswith('USDT') and symbol.count('USD')<=1 and 'DOWN' not in symbol]
+      if symbols is None or len(symbols) ==0:
+          time.sleep(2)
+          iter = iter + 1
+      else:
+        print(symbols)
+        return symbols
+
+def get_client():
+      iter = 0
+      while iter < 10:
+          try:
+            client =  Client("gfnlLkx7xmavONsmkK3E9QmDAqLGns1VTrGi0d1PiR9HMWeX7Jjs5Qkt4SUXS5Ed","oY1uue1D2YqI438xNyUlly0fj63VZGG3NtXTm4rrBtBgXGxJ8uvb5MjOeo8S7Qog",{"verify": False, "timeout": 500})
+            _ = client.get_server_time()
+            return client
+          except Exception as e:
+            print(e)
+            time.sleep(10)
+          iter = iter + 1
 
 
 def download_file(base_path, file_name, date_range=None, folder=None):
-  download_path = "{}{}".format(base_path, file_name)
-  if folder:
-    base_path = os.path.join(folder, base_path)
-  if date_range:
-    date_range = date_range.replace(" ","_")
-    base_path = os.path.join(base_path, date_range)
-  s = base_path.split("/")
-  a = s[5]
-  s[5] = s[4]
-  s[4] = a 
-  s = "/".join(s)
-  save_path = get_destination_dir(os.path.join(s, file_name), folder)
-  
+    download_path = "{}{}".format(base_path, file_name)
+    if folder:
+        base_path = os.path.join(folder, base_path)
+    if date_range:
+        date_range = date_range.replace(" ", "_")
+        base_path = os.path.join(base_path, date_range)
+    s = base_path.split('/')
+    tmp = s[5]
+    s[5]=s[4]
+    s[4] =tmp
+    base_path = "/".join(s)
+    save_path = get_destination_dir(os.path.join(base_path, file_name), folder)
+    if os.path.exists(save_path):
+        print("\nfile already exists! {}".format(save_path))
+        return
 
-  if os.path.exists(save_path):
-    print("\nfile already exists! {}".format(save_path))
-    return
-  
-  # make the directory
-  if not os.path.exists(s):
-    Path(get_destination_dir(s)).mkdir(parents=True, exist_ok=True)
+    # make the directory
+    if not os.path.exists(base_path):
+        Path(get_destination_dir(base_path)).mkdir(parents=True, exist_ok=True)
 
-  try:
-    download_url = get_download_url(download_path)
-    dl_file = urllib.request.urlopen(download_url)
-    length = dl_file.getheader('content-length')
-    if length:
-      length = int(length)
-      blocksize = max(4096,length//100)
+    try:
+        download_url = get_download_url(download_path)
+        dl_file = urllib.request.urlopen(download_url)
+        length = dl_file.getheader('content-length')
+        if length:
+            length = int(length)
+            blocksize = max(4096, length // 100)
 
-    with open(save_path, 'wb') as out_file:
-      dl_progress = 0
-      print("\nFile Download: {}".format(save_path))
-      while True:
-        buf = dl_file.read(blocksize)   
-        if not buf:
-          break
-        dl_progress += len(buf)
-        out_file.write(buf)
-        done = int(50 * dl_progress / length)
-        sys.stdout.write("\r[%s%s]" % ('#' * done, '.' * (50-done)) )    
-        sys.stdout.flush()
+        with open(save_path, 'wb') as out_file:
+            dl_progress = 0
+            print("\nFile Download: {}".format(save_path))
+            while True:
+                buf = dl_file.read(blocksize)
+                if not buf:
+                    break
+                dl_progress += len(buf)
+                out_file.write(buf)
+                done = int(50 * dl_progress / length)
+                sys.stdout.write("\r[%s%s]" % ('#' * done, '.' * (50 - done)))
+                sys.stdout.flush()
 
-  except urllib.error.HTTPError:
-    print("\nFile not found: {}".format(download_url))
-    pass
+    except urllib.error.HTTPError:
+        print("\nFile not found: {}".format(download_url))
+        pass
 
 def convert_to_date_object(d):
   year, month, day = [int(x) for x in d.split('-')]
